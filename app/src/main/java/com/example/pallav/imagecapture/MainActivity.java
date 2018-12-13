@@ -12,7 +12,10 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,18 +31,18 @@ import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+
 
 
 public class MainActivity extends AppCompatActivity {
 
     private Button btnCamera;
+    private Button btnFile;
     private ImageView capturedImage;
     private String imageFilePath;
     private String fileName = "default";
     private static final int REQUEST_CAPTURE_IMAGE = 100;
+    private static final int REQUEST_FILE_PATH = 1234;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        Typeface font = Typeface.createFromAsset( getAssets(), "fontawesome-webfont.ttf" );
         btnCamera = (Button) findViewById(R.id.btnCamera);
+        btnFile = (Button) findViewById(R.id.btnFile);
 
         capturedImage = (ImageView) findViewById(R.id.capturedImage);
 
@@ -56,11 +60,21 @@ public class MainActivity extends AppCompatActivity {
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                openCamera();
+                capturedImage.setImageResource(0);
                 showPopUp();
             }
         });
+
+        btnFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), FilesActivity.class);
+                startActivityForResult(intent, REQUEST_FILE_PATH);
+            }
+        });
     }
+
+
 
     private void showPopUp() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -91,8 +105,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openCamera() {
-//        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-//        startActivityForResult(intent, 0);
         Intent pictureIntent = new Intent(
                 MediaStore.ACTION_IMAGE_CAPTURE);
         if (pictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -122,11 +134,22 @@ public class MainActivity extends AppCompatActivity {
             Bitmap bp = (Bitmap) data.getExtras().get("data");
             capturedImage.setImageBitmap(bp);
         }*/
-        if (resultCode == RESULT_OK) {
-            Toast.makeText(this, imageFilePath, Toast.LENGTH_SHORT);
-            Glide.with(this).load(imageFilePath).into(capturedImage);
-//            Bitmap bp = (Bitmap) data.getExtras().get("data");
-//            capturedImage.setImageBitmap(bp);
+        switch(requestCode) {
+            case (REQUEST_CAPTURE_IMAGE) : {
+                if (resultCode == Activity.RESULT_OK) {
+                    Toast.makeText(this, imageFilePath, Toast.LENGTH_SHORT);
+                    Glide.with(this).load(imageFilePath).into(capturedImage);
+                }
+            }break;
+            case (REQUEST_FILE_PATH) : {
+                if (resultCode == Activity.RESULT_OK) {
+//                    Toast.makeText(this, "returned file path : " + data.getStringExtra("filePath"), Toast.LENGTH_SHORT);
+                    if(null != data.getStringExtra("filePath")){
+                        Glide.with(this).load(data.getStringExtra("filePath")).into(capturedImage);
+                    }
+
+                }
+            }break;
         }
         /*else if(resultCode == Activity.RESULT_CANCELLED) {
             // User Cancelled the action
@@ -135,17 +158,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     private File createImageFile() throws IOException {
-//        String timeStamp =
-//                new SimpleDateFormat("yyyyMMdd_HHmmss",
-//                        Locale.getDefault()).format(new Date());
-//        String imageFileName = "IMG_" + timeStamp + "_";
+
         File storageDir =
                 getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        /*File image = File.createTempFile(
-                fileName,  *//* prefix *//*
-                ".jpg",         *//* suffix *//*
-                storageDir      *//* directory *//*
-        );*/
+
         File image = new File(storageDir, fileName + ".jpg");
 
         imageFilePath = image.getAbsolutePath();

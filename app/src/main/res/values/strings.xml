@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">ImageCapture</string>
-    <string name="camera_button">&#xf030; Take Picture</string>
+    <string name="camera_button">Take Picture</string>
 </resources>
